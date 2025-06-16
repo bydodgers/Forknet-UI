@@ -1,0 +1,171 @@
+{
+  "name": "forknet-ui",
+  "version": "0.1.0",
+  "description": "Forknet Node Management UI - Desktop Application",
+  "author": "Dodgers <https://github.com/bydodgers>",
+  "main": "public/main.js",
+  "homepage": "./",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bydodgers/Forknet-UI.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bydodgers/Forknet-UI/issues"
+  },
+  "private": true,
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/icons-material": "^7.1.0",
+    "@mui/material": "^7.1.0",
+    "@noble/curves": "^1.9.1",
+    "@noble/hashes": "^1.8.0",
+    "@reduxjs/toolkit": "^2.8.2",
+    "@types/jest": "^27.5.2",
+    "@types/node": "^22.15.29",
+    "@types/react": "^19.1.5",
+    "@types/react-dom": "^19.1.5",
+    "axios": "^1.9.0",
+    "electron-is-dev": "^2.0.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-redux": "^9.2.0",
+    "react-router-dom": "^7.6.0",
+    "react-scripts": "5.0.1",
+    "typescript": "^4.9.5",
+    "web-vitals": "^5.0.2"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "build:prod": "GENERATE_SOURCEMAP=false npm run build",
+    "analyze": "npm run build && node scripts/analyze-bundle.js",
+    "analyze:detailed": "npm run build:dev && npx source-map-explorer 'build/static/js/*.js' --no-open --html build/bundle-report.html && echo 'Bundle report saved to build/bundle-report.html'",
+    "build:dev": "GENERATE_SOURCEMAP=true npm run build",
+    "size": "npm run build && npx bundlesize",
+    "size:quick": "npm run build && ls -lh build/static/js/*.js build/static/css/*.css | awk '{print $5, $9}' | sort -hr",
+    "performance": "npm run build:prod && npm run analyze",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "electron": "electron .",
+    "electron-dev": "concurrently \"npm start\" \"wait-on http://localhost:3000 && electron . --no-sandbox --disable-dev-shm-usage\"",
+    "build-electron": "npm run build:prod && node -e \"require('fs').copyFileSync('public/main.js', 'build/electron.js'); require('fs').copyFileSync('public/preload.js', 'build/preload.js');\" && electron-builder",
+    "build-electron-all": "npm run build:prod && node -e \"require('fs').copyFileSync('public/main.js', 'build/electron.js'); require('fs').copyFileSync('public/preload.js', 'build/preload.js');\" && electron-builder --mac --win --linux",
+    "build-mac": "npm run build:prod && node -e \"require('fs').copyFileSync('public/main.js', 'build/electron.js'); require('fs').copyFileSync('public/preload.js', 'build/preload.js');\" && electron-builder --mac",
+    "build-win": "npm run build:prod && node -e \"require('fs').copyFileSync('public/main.js', 'build/electron.js'); require('fs').copyFileSync('public/preload.js', 'build/preload.js');\" && electron-builder --win",
+    "build-linux": "npm run build:prod && node -e \"require('fs').copyFileSync('public/main.js', 'build/electron.js'); require('fs').copyFileSync('public/preload.js', 'build/preload.js');\" && electron-builder --linux",
+    "dist": "npm run build:prod && electron-builder --publish=never",
+    "pack": "npm run build:prod && electron-builder --dir"
+  },
+  "bundlesize": [
+    {
+      "path": "build/static/js/*.js",
+      "maxSize": "300 kB"
+    },
+    {
+      "path": "build/static/css/*.css",
+      "maxSize": "50 kB"
+    }
+  ],
+  "build": {
+    "appId": "com.bydodgers.forknet-ui",
+    "productName": "Forknet UI",
+    "copyright": "Copyright © 2024 Dodgers",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "build/**/*",
+      "node_modules/**/*",
+      "public/main.js",
+      "public/preload.js",
+      "public/icon.png"
+    ],
+    "extraResources": [
+      {
+        "from": "public/main.js",
+        "to": "main.js"
+      },
+      {
+        "from": "public/preload.js", 
+        "to": "preload.js"
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.utilities",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "icon": "public/icon.png"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "publisherName": "Dodgers",
+      "icon": "public/icon.png"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        },
+        {
+          "target": "deb",
+          "arch": ["x64"]
+        }
+      ],
+      "category": "Utility",
+      "icon": "public/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "bydodgers",
+      "repo": "Forknet-UI"
+    }
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "bundlesize": "^0.18.1",
+    "concurrently": "^8.2.2",
+    "electron": "^28.3.3",
+    "electron-builder": "^24.13.3",
+    "electron-store": "^8.2.0",
+    "source-map-explorer": "^2.5.3",
+    "wait-on": "^7.2.0"
+  }
+}
