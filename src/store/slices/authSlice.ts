@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { AuthState, Account, LoginCredentials } from "../../types/auth";
 import { ForknetApi } from "../../services/forknetApi";
+import { BalanceService } from "../../services/balanceService";
 import { STORAGE_KEYS } from "../../utils/constants";
 
 const initialState: AuthState = {
@@ -9,6 +10,10 @@ const initialState: AuthState = {
   privateKey: null,
   loading: false,
   error: null,
+  balanceInfo: null,
+  balanceLoading: false,
+  balanceError: null,
+  lastBalanceUpdate: null,
 };
 
 // Helper function to process login after getting private key
@@ -49,7 +54,6 @@ const processLogin = async (privateKey: string) => {
       error.message.includes("Not Found") ||
       error.message.includes("Failed to fetch account information")
     ) {
-
       // Create account object with default values for new account
       const account: Account = {
         address,
@@ -180,7 +184,6 @@ export const loginWithBackupFile = createAsyncThunk(
 
       return await processLogin(privateKey);
     } catch (error: any) {
-
       // Provide more specific error messages
       let errorMessage = error.message || "Backup file login failed";
 
@@ -231,6 +234,19 @@ export const logout = createAsyncThunk("auth/logout", async () => {
   localStorage.removeItem(STORAGE_KEYS.PRIVATE_KEY);
   localStorage.removeItem(STORAGE_KEYS.ACCOUNT);
 });
+
+// Async thunk for fetching balance
+export const fetchAccountBalance = createAsyncThunk(
+  "auth/fetchAccountBalance",
+  async (address: string, { rejectWithValue }) => {
+    try {
+      const balanceInfo = await BalanceService.getAccountBalance(address);
+      return { balanceInfo, timestamp: Date.now() };
+    } catch (error: any) {
+      return rejectWithValue(error.message || "Failed to fetch balance");
+    }
+  }
+);
 
 const authSlice = createSlice({
   name: "auth",
@@ -309,6 +325,22 @@ const authSlice = createSlice({
         state.account = null;
         state.privateKey = null;
         state.error = null;
+      })
+
+      // Balance
+      .addCase(fetchAccountBalance.pending, (state) => {
+        state.balanceLoading = true;
+        state.balanceError = null;
+      })
+      .addCase(fetchAccountBalance.fulfilled, (state, action) => {
+        state.balanceLoading = false;
+        state.balanceInfo = action.payload.balanceInfo;
+        state.lastBalanceUpdate = action.payload.timestamp;
+        state.balanceError = null;
+      })
+      .addCase(fetchAccountBalance.rejected, (state, action) => {
+        state.balanceLoading = false;
+        state.balanceError = action.payload as string;
       });
   },
 });

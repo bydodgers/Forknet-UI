@@ -1,3 +1,5 @@
+import { BalanceInfo } from '../services/balanceService';
+
 export interface LoginCredentials {
     privateKey: string;
 }
@@ -15,4 +17,8 @@ export interface AuthState {
     privateKey: string | null;
     loading: boolean;
     error: string | null;
+    balanceInfo: BalanceInfo | null;
+    balanceLoading: boolean;
+    balanceError: string | null;
+    lastBalanceUpdate: number | null;
 }
