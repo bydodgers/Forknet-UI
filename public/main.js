@@ -68,24 +68,58 @@ function getApiKey() {
 }
 
 function createWindow() {
-  // Create the browser window
+  const { screen } = require('electron');
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width, height } = primaryDisplay.workAreaSize;
+  
+  // Define reasonable minimums that work on smaller screens
+  const MIN_WIDTH = 800;
+  const MIN_HEIGHT = 600;
+  const MAX_WIDTH = 1920;
+  const MAX_HEIGHT = 1440;
+  
+  // Calculate responsive window size (80% of screen, respecting minimums)
+  const windowWidth = Math.min(Math.max(width * 0.8, MIN_WIDTH), MAX_WIDTH);
+  const windowHeight = Math.min(Math.max(height * 0.8, MIN_HEIGHT), MAX_HEIGHT);
+
   mainWindow = new BrowserWindow({
-    width: 1400,
-    height: 900,
-    minWidth: 1200,
-    minHeight: 700,
+    width: windowWidth,
+    height: windowHeight,
+    minWidth: MIN_WIDTH,
+    minHeight: MIN_HEIGHT,
+    maxWidth: MAX_WIDTH,
+    maxHeight: MAX_HEIGHT,
+    center: true,
+    resizable: true,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
       enableRemoteModule: false,
       preload: path.join(__dirname, "preload.js"),
-      webSecurity: true,
-      allowRunningInsecureContent: false,
     },
     icon: path.join(__dirname, "icon.png"),
     show: false,
-    titleBarStyle: "default",
   });
+
+  // Save and restore window state (but respect minimums)
+  const windowState = store.get('windowState', {});
+  if (windowState.width && windowState.height) {
+    const restoredWidth = Math.max(windowState.width, MIN_WIDTH);
+    const restoredHeight = Math.max(windowState.height, MIN_HEIGHT);
+    mainWindow.setSize(restoredWidth, restoredHeight);
+  }
+  if (windowState.x && windowState.y) {
+    // Make sure window is still visible on screen
+    const maxX = width - MIN_WIDTH;
+    const maxY = height - MIN_HEIGHT;
+    const safeX = Math.max(0, Math.min(windowState.x, maxX));
+    const safeY = Math.max(0, Math.min(windowState.y, maxY));
+    mainWindow.setPosition(safeX, safeY);
+  }
+
+  // Save window state on resize/move
+  mainWindow.on('resize', saveWindowState);
+  mainWindow.on('move', saveWindowState);
 
   const startUrl = isDev
     ? "http://localhost:3000"
@@ -110,7 +144,6 @@ function createWindow() {
 
   // Clear authentication data when window is closed
   mainWindow.on("close", (event) => {
-
     // Send logout command to renderer before closing
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send("app-closing");
@@ -119,8 +152,15 @@ function createWindow() {
 
   mainWindow.on("closed", () => {
     mainWindow = null;
-    cachedApiKey = null; // Clear cached API key
+    cachedApiKey = null;
   });
+}
+
+function saveWindowState() {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    const bounds = mainWindow.getBounds();
+    store.set('windowState', bounds);
+  }
 }
 
 // App event listeners
