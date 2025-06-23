@@ -32,7 +32,6 @@ import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import DownloadIcon from '@mui/icons-material/Download';
 import PersonIcon from '@mui/icons-material/Person';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import CloseIcon from '@mui/icons-material/Close';
 import InfoIcon from '@mui/icons-material/Info';
 import SecurityIcon from '@mui/icons-material/Security';
@@ -48,99 +47,13 @@ import { CryptoUtils } from '../utils/crypto';
 import { ROUTES } from '../utils/constants';
 import PasswordDialog from '../components/Dialogs/PasswordDialog';
 import ShowPrivateKeyDialog from '../components/Security/ShowPrivateKeyDialog';
-
-// Unified Stats Widget Component
-interface StatsWidgetProps {
-  title: string;
-  value: string | number | React.ReactNode;
-  icon: React.ReactNode;
-  variant?: 'primary' | 'success' | 'neutral';
-}
-
-const StatsWidget: React.FC<StatsWidgetProps> = ({ title, value, icon, variant = 'neutral' }) => {
-  const theme = useTheme();
-
-  const getVariantStyles = () => {
-    switch (variant) {
-      case 'primary':
-        return {
-          borderColor: theme.palette.primary.main,
-          iconBg: alpha(theme.palette.primary.main, 0.1),
-          iconColor: theme.palette.primary.main,
-        };
-      case 'success':
-        return {
-          borderColor: theme.palette.success.main,
-          iconBg: alpha(theme.palette.success.main, 0.1),
-          iconColor: theme.palette.success.main,
-        };
-      default:
-        return {
-          borderColor: theme.palette.grey[300],
-          iconBg: alpha(theme.palette.grey[500], 0.1),
-          iconColor: theme.palette.grey[600],
-        };
-    }
-  };
-
-  const styles = getVariantStyles();
-
-  return (
-    <Card
-      sx={{
-        height: '100%',
-        border: `2px solid ${styles.borderColor}`,
-        borderRadius: 2,
-        transition: 'all 0.3s ease',
-        '&:hover': {
-          transform: 'translateY(-2px)',
-          boxShadow: 3,
-          borderColor: variant === 'neutral' ? theme.palette.primary.main : styles.borderColor,
-        },
-      }}
-    >
-      <CardContent sx={{ textAlign: 'center', py: 3 }}>
-        <Box
-          sx={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 56,
-            height: 56,
-            borderRadius: '50%',
-            bgcolor: styles.iconBg,
-            color: styles.iconColor,
-            mb: 2,
-          }}
-        >
-          {icon}
-        </Box>
-        <Typography variant="h5" component="div" sx={{ fontWeight: 700, mb: 1 }}>
-          {value}
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-          {title}
-        </Typography>
-      </CardContent>
-    </Card>
-  );
-};
+import BalanceDisplay from '../components/Balance/BalanceDisplay';
 
 const Dashboard: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const theme = useTheme();
   const { account } = useSelector((state: RootState) => state.auth);
-
-  // Helper function for blockchain-accurate balance display
-  const formatBalance = (balance: number | undefined): string => {
-    if (typeof balance !== 'number' || isNaN(balance)) {
-      return '0.00000000';
-    }
-
-    // Show up to 8 decimal places, remove trailing zeros
-    return balance.toFixed(8).replace(/\.?0+$/, '') || '0';
-  };
 
   // Dialog states
   const [showPrivateKeyDialog, setShowPrivateKeyDialog] = useState(false);
@@ -421,128 +334,110 @@ const Dashboard: React.FC = () => {
         </Toolbar>
       </AppBar>
 
-      {/* Account Overview Stats */}
+      {/* Account Overview */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12, md: 6 }}>
-          <StatsWidget
-            title="Account Level"
-            value={`Level ${account.level || 0}`}
-            icon={<TrendingUpIcon sx={{ fontSize: 28 }} />}
-            variant={account.level && account.level > 0 ? "success" : "neutral"}
-          />
+          {account?.address && (
+            <BalanceDisplay
+              address={account.address}
+              compact={false}
+              showRefresh={true}
+            />
+          )}
         </Grid>
 
+        {/* Account Details */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <StatsWidget
-            title="FRK Balance"
-            value={
-              <Typography
-                variant="h5"
-                component="div"
-                sx={{
-                  fontWeight: 700,
-                  fontFamily: 'monospace',
-                  fontSize: '1.2rem'
-                }}
-              >
-                {formatBalance(account.balance)}
-              </Typography>
-            }
-            icon={<AccountBalanceWalletIcon sx={{ fontSize: 24 }} />}
-            variant="primary"
-          />
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
+              <Box display="flex" alignItems="center" mb={3}>
+                <Avatar sx={{ bgcolor: 'primary.main', mr: 2, width: 56, height: 56 }}>
+                  <PersonIcon sx={{ fontSize: 32 }} />
+                </Avatar>
+                <Box flexGrow={1}>
+                  <Typography variant="h5" gutterBottom>
+                    Account Information
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Your Forknet account details and status
+                  </Typography>
+                </Box>
+              </Box>
+
+              <Grid container spacing={3}>
+                <Grid size={{ xs: 12 }}>
+                  <Box mb={2}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Account Address
+                    </Typography>
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        p: 2,
+                        bgcolor: 'grey.50',
+                        borderRadius: 2,
+                        border: '1px solid',
+                        borderColor: 'grey.200',
+                      }}
+                    >
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          wordBreak: 'break-all',
+                          fontFamily: 'monospace',
+                          fontSize: '0.875rem',
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {account.address}
+                      </Typography>
+                    </Paper>
+                  </Box>
+                </Grid>
+
+                <Grid size={{ xs: 12 }}>
+                  <Box mb={2}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Public Key
+                    </Typography>
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        p: 2,
+                        bgcolor: 'grey.50',
+                        borderRadius: 2,
+                        border: '1px solid',
+                        borderColor: 'grey.200',
+                      }}
+                    >
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          wordBreak: 'break-all',
+                          fontFamily: 'monospace',
+                          fontSize: '0.875rem',
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {account.publicKey}
+                      </Typography>
+                    </Paper>
+                  </Box>
+                </Grid>
+              </Grid>
+
+              {account.balance === 0 && (
+                <Alert severity="info" sx={{ mt: 2 }}>
+                  <Typography variant="body2">
+                    <strong>New Account:</strong> Your account will appear on the network after your first transaction.
+                    Current balance and level will update once you receive FRK or interact with the network.
+                  </Typography>
+                </Alert>
+              )}
+            </CardContent>
+          </Card>
         </Grid>
       </Grid>
-
-      {/* Account Details Card */}
-      <Card sx={{ mb: 4 }}>
-        <CardContent>
-          <Box display="flex" alignItems="center" mb={3}>
-            <Avatar sx={{ bgcolor: 'primary.main', mr: 2, width: 56, height: 56 }}>
-              <PersonIcon sx={{ fontSize: 32 }} />
-            </Avatar>
-            <Box flexGrow={1}>
-              <Typography variant="h5" gutterBottom>
-                Account Information
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Your Forknet account details and status
-              </Typography>
-            </Box>
-          </Box>
-
-          <Grid container spacing={3}>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Box mb={2}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Account Address
-                </Typography>
-                <Paper
-                  elevation={0}
-                  sx={{
-                    p: 2,
-                    bgcolor: 'grey.50',
-                    borderRadius: 2,
-                    border: '1px solid',
-                    borderColor: 'grey.200',
-                  }}
-                >
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      wordBreak: 'break-all',
-                      fontFamily: 'monospace',
-                      fontSize: '0.875rem',
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    {account.address}
-                  </Typography>
-                </Paper>
-              </Box>
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Box mb={2}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Public Key
-                </Typography>
-                <Paper
-                  elevation={0}
-                  sx={{
-                    p: 2,
-                    bgcolor: 'grey.50',
-                    borderRadius: 2,
-                    border: '1px solid',
-                    borderColor: 'grey.200',
-                  }}
-                >
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      wordBreak: 'break-all',
-                      fontFamily: 'monospace',
-                      fontSize: '0.875rem',
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    {account.publicKey}
-                  </Typography>
-                </Paper>
-              </Box>
-            </Grid>
-          </Grid>
-
-          {account.balance === 0 && (
-            <Alert severity="info" sx={{ mt: 2 }}>
-              <Typography variant="body2">
-                <strong>New Account:</strong> Your account will appear on the network after your first transaction.
-                Current balance and level will update once you receive FRK or interact with the network.
-              </Typography>
-            </Alert>
-          )}
-        </CardContent>
-      </Card>
 
       {/* Unified Navigation Cards */}
       <Typography variant="h5" gutterBottom sx={{ mb: 3, fontWeight: 'bold' }}>
